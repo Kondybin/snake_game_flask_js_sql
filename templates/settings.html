@@ -1,0 +1,56 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Settings
+{% endblock %}
+
+{% block main %}
+    <form action="/settings" method="post">
+        <div id="settings_container" class="container">
+            <div class="row justify-content-md-center page_header">Game settings</div>
+            <div class="row justify-content-md-center">
+                <div class="col col-lg-2 settings_label" style="margin-top: 8px;">Speed</div>
+                <div class="col col-lg-1">
+                    <select id="speedSelect" class="form-select mx-auto w-auto" name="speed">
+                        {% for speed in settings.speeds %}
+                            <option value="{{ speed }}">{{ speed }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="row justify-content-md-center">
+                <div class="col col-lg-2 settings_label">Food color</div>
+                <div class="col col-lg-1">
+                    <input type="color" id="food_color" name="food_color" value="{{ settings.food_color }}" />
+                </div>
+            </div>
+            <div class="row justify-content-md-center">
+                <div class="col col-lg-2 settings_label">Snake color</div>
+                <div class="col col-lg-1">
+                    <input type="color" id="snake_color" name="snake_color" value="{{ settings.snake_color }}" />
+                </div>
+            </div>
+            <div class="row justify-content-md-center">
+                <div class="col col-lg-2 settings_label">Background color</div>
+                <div class="col col-lg-1">
+                    <input type="color" id="background_color" name="background_color" value="{{ settings.background_color }}" />
+                </div>
+            </div>
+            <div class="row justify-content-md-center">
+                <div class="col col-lg-2 settings_label">Border obstacle</div>
+                <div class="col col-lg-1">
+                    <input type="checkbox" id="border_obstacle" name="border_obstacle" value="{{ settings.background_color }}" />
+                </div>
+            </div>
+            <button class="btn btn-primary" type="submit">Save</button>
+        </div>
+    </form>
+
+    <script>
+        function init_values() {
+            document.getElementById("speedSelect").selectedIndex = '{{ settings.speed }}';
+            document.getElementById("border_obstacle").checked = '{{ settings.border_obstacle }}' == 'True';
+        }
+        init_values();
+    </script>
+{% endblock %}

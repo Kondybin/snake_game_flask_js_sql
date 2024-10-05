@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Top scores
+{% endblock %}
+
+{% block main %}
+    <div id="score_container" class="container">
+        <div class="row justify-content-md-center page_header">Top 15 scores</div>
+    </div>
+    <table class="table table-striped table-center">
+        <thead>
+            <tr>
+                <th class="col">Score</th>
+                <th class="col">User login</th>
+                <th class="col">Score date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in scores %}
+                <tr class="{{ item.style_class }}">
+                    <td class="col">{{ item.score }}</td>
+                    <td class="col">{{ item.login }}</td>
+                    <td class="col">{{ item.date }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+{% endblock %}

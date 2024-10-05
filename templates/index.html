@@ -1,0 +1,207 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Home page
+{% endblock %}
+
+{% block main %}
+    <style>
+        canvas {
+            border:1px solid #000000; 
+            background-color: {{ settings.background_color }};
+        }
+    </style>
+    <main class="container py-5 text-center">
+        <div class="score"><span class="score_label">Score: </span><span id="score" class="score_value">0</span></div>
+        <canvas id="gameCanvas" tabindex="1" width="650" height="650"></canvas>
+    </main>
+
+    <script>
+
+        var element_size = 50;
+        var score = 0;
+        var is_game_on = true;
+        var direction = "right";
+        var canvas = document.getElementById("gameCanvas");
+        document.addEventListener('keyup', process_keypress);
+
+        var snake = init_snake();
+        var food = init_food();
+
+        function is_new_direction_allowed(new_direction) {
+            return (new_direction == "up" && direction != "down")
+            || (new_direction == "down" && direction != "up")
+            || (new_direction == "left" && direction != "right")
+            || (new_direction == "right" && direction != "left");
+        }
+
+        function change_direction(new_direction) {
+            if (is_new_direction_allowed(new_direction)) {
+                direction = new_direction;
+            }
+        }
+
+        function process_keypress(e) {
+            switch (e.code) {
+                case "ArrowRight":
+                    change_direction("right");
+                    break;
+                case "ArrowUp":
+                    change_direction("up");
+                    break;
+                case "ArrowLeft":
+                    change_direction("left");
+                    break;
+                case "ArrowDown":
+                    change_direction("down");
+                    break;
+            }
+        }
+
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min) + min);
+        }
+
+        function getFoodCoord(game_dimension) {
+            return getRandomInt(0, game_dimension / element_size) * element_size;
+        }
+
+        function init_snake() {
+            snake = {};
+            snake.coordinates = [];
+            for (let i = 0; i < 3; i++) {
+                snake.coordinates.push({"x": 100 - i * element_size, "y": 300})
+            }
+            return snake;
+        }
+
+        function draw_snake() {
+            var ctx = canvas.getContext("2d");
+            for (let i = 0; i < snake.coordinates.length; i++) {
+                ctx.beginPath();
+                ctx.fillStyle = '{{ settings.snake_color }}';
+                ctx.fillRect(snake.coordinates[i].x, snake.coordinates[i].y, element_size, element_size);
+            }
+        }
+
+        function init_food() {
+            food = {};
+            food.coordinates = [];
+            while (true) {
+                var intersect = false;
+                x = getFoodCoord(canvas.width);
+                y = getFoodCoord(canvas.height);
+                for (let i = 0; i < snake.coordinates.length; i++) {
+                    if (snake.coordinates[i].x == x && snake.coordinates[i].y == y) {
+                        intersect = true;
+                    }
+                }
+                if (!intersect) {
+                    break;
+                }
+            }
+            food.coordinates.push(x);
+            food.coordinates.push(y);
+            return food;
+        }
+
+        function draw_food() {
+            var ctx = canvas.getContext("2d");
+            ctx.beginPath();
+            radius = element_size / 2;
+            ctx.arc(food.coordinates[0] + radius, food.coordinates[1] + radius, radius, 0, 2 * Math.PI);
+            ctx.fillStyle = '{{ settings.food_color }}';
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        function update_score() {
+            fetch('/catch_food');
+            is_window_border = '{{ settings.border_obstacle }}' == 'True'
+            var score_div = document.getElementById("score");
+            score += parseInt('{{ settings.speed_value }}');
+            if (is_window_border) {
+                score += 2;
+            }
+            score_div.innerHTML = score;
+        }
+
+        function check_collisions() {
+            x_head = snake.coordinates[0].x;
+            y_head = snake.coordinates[0].y;
+            is_window_border = '{{ settings.border_obstacle }}' == 'True'
+            if (is_window_border) {
+                if (x_head < 0 || x_head >= canvas.width) {
+                    return true;
+                } else if (y_head < 0 || y_head >= canvas.height) {
+                    return true;
+                }
+            }
+            
+            for (let i = 1; i < snake.coordinates.length; i++) {
+                if (snake.coordinates[i].x == x_head && snake.coordinates[i].y == y_head) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function get_new_head_coordinates() {
+            x_head = snake.coordinates[0].x;
+            y_head = snake.coordinates[0].y;
+            check_window_border = '{{ settings.border_obstacle }}' == 'True'
+            switch (direction) {
+                case "down":
+                    y_head = !check_window_border && y_head == canvas.height - element_size ? 0 : y_head + element_size;
+                    break;
+                case "up":
+                    y_head = !check_window_border && y_head == 0 ? canvas.height - element_size : y_head - element_size;
+                    break;
+                case "right":
+                    x_head = !check_window_border && x_head == canvas.width - element_size ? 0 : x_head + element_size;
+                    break;
+                case "left":
+                    x_head = !check_window_border && x_head == 0 ? canvas.width - element_size : x_head - element_size;
+                    break;
+            }
+            return [x_head, y_head];
+        }
+
+        function next_move() {
+            var ctx = canvas.getContext("2d");
+            if (!is_game_on) {
+                return;
+            }
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            new_head_coords = get_new_head_coordinates();
+            snake.coordinates.unshift({"x": new_head_coords[0], "y": new_head_coords[1]});
+            if (snake.coordinates[0].x == food.coordinates[0] && snake.coordinates[0].y == food.coordinates[1]) {
+                init_food();
+                update_score();
+            } else {
+                snake.coordinates.pop();
+            }
+            if (check_collisions()) {
+                game_over();
+            } else {
+                draw_food();
+                draw_snake();
+            }
+        }
+
+        async function game_over() {
+            is_game_on = false;
+            fetch('/game_over');
+            var ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.font = "72px serif";
+            ctx.fillStyle = "purple";
+            ctx.fillText("Game over!", 160, 350);
+        }
+
+        draw_food();
+        draw_snake();
+        setInterval(next_move, '{{ settings.speed }}')
+    </script>
+
+{% endblock %}
