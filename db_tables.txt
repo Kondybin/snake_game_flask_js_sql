@@ -1,0 +1,30 @@
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    username TEXT NOT NULL,
+    hash TEXT NOT NULL,
+    visitedOn NUMERIC NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    createdOn NUMERIC NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE sqlite_sequence(name,seq);
+
+CREATE UNIQUE INDEX username ON users (username);
+
+CREATE TABLE settings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    user_id INTEGER NOT NULL,
+    food_color TEXT NOT NULL,
+    snake_color TEXT NOT NULL,
+    background_color TEXT NOT NULL,
+    speed INTEGER,
+    border_obstacle INTEGER,
+    FOREIGN KEY(user_id) REFERENCES users(id)
+);
+
+CREATE TABLE scores (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    user_id INTEGER NOT NULL,
+    score INTEGER,
+    createdOn NUMERIC NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(user_id) REFERENCES users(id)
+);
